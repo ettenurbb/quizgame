@@ -1,8 +1,8 @@
 package com.quizgame.quizgame.util;
 
 import io.jsonwebtoken.*;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
-
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
@@ -12,13 +12,9 @@ import io.jsonwebtoken.security.Keys;
 
 @Component
 public class JwtUtil {
-
-    
     private final SecretKey SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS512);
-    
     private final long EXPIRATION = 86400000; // 24 часа
 
-    // Для тестирования можно выводить ключ (один раз при запуске)
     public JwtUtil() {
         System.out.println("Generated JWT Secret Key: " + Base64.getEncoder().encodeToString(SECRET_KEY.getEncoded()));
     }
@@ -50,5 +46,10 @@ public class JwtUtil {
         } catch (JwtException | IllegalArgumentException ignored) {
             return false;
         }
+    }
+
+    
+    public String encodePassword(String rawPassword) {
+        return new BCryptPasswordEncoder().encode(rawPassword);
     }
 }

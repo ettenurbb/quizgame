@@ -7,6 +7,7 @@ import lombok.Data;
 @Data
 @Table(name = "matches")
 public class Match {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -22,4 +23,18 @@ public class Match {
     private String status; // WAITING, IN_PROGRESS, FINISHED
 
     private String startTime;
+
+    private String endTime;
+
+    // Поле для победителя
+    private Long winnerId;
+
+    // Геттер и сеттер (Lombok может не сгенерировать их корректно, если поле не аннотировано)
+    public Long getWinnerId() {
+        return winnerId;
+    }
+
+    public void setWinnerId(Long winnerId) {
+        this.winnerId = winnerId;
+    }
 }
