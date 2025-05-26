@@ -3,6 +3,8 @@ package com.quizgame.quizgame.model;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Data
 @Table(name = "users")
@@ -20,6 +22,15 @@ public class User {
 
     @Column(nullable = false)
     private String passwordHash;
+    
+    @Column(name = "email_verified")
+    private boolean emailVerified = false;
+
+    @Column(name = "verification_token")
+    private String verificationToken;
+
+    @Column(name = "token_expiration")
+    private LocalDateTime tokenExpiration;
 
     private String avatarUrl;
 
