@@ -26,9 +26,14 @@ public class MatchAnswer {
 
     @ManyToOne
     @JoinColumn(name = "selected_answer_id")
-    private Answer selectedAnswer;
+    private Answer selectedAnswer; // ссылка на выбранный ответ
 
     private boolean isCorrect;
     private double timeSpent; // время ответа в секундах
     private boolean isAnswered;
+
+    
+    public void setSelectedAnswer(Answer answer) {
+        this.selectedAnswer = answer;
+    }
 }

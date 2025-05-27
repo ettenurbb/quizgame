@@ -15,27 +15,35 @@ public class Match {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "player1_id", nullable = false)
-    private User player1;
+    @Column(name = "player1_id", nullable = false)
+    private Long player1Id;
 
-    @ManyToOne
-    @JoinColumn(name = "player2_id", nullable = false)
-    private User player2;
+    @Column(name = "player2_id", nullable = false)
+    private Long player2Id;
 
-    @Column(name = "status", nullable = false)
-    private String status; // например: "in_progress", "finished"
+    @Column(name = "status")
+    private String status;
 
-    @Column(name = "start_time")
+    @Column(name = "start_time", columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private LocalDateTime startTime;
 
-    @Column(name = "end_time")
+    @Column(name = "end_time", columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private LocalDateTime endTime;
 
-    @ManyToOne
-    @JoinColumn(name = "winner_id")
-    private User winner;
+    @Column(name = "winner_id")
+    private Long winnerId;
 
+    // Связь с пользователем (игрок 1)
+    @ManyToOne
+    @JoinColumn(name = "player1_id", insertable = false, updatable = false)
+    private User player1;
+
+    // Связь с пользователем (игрок 2)
+    @ManyToOne
+    @JoinColumn(name = "player2_id", insertable = false, updatable = false)
+    private User player2;
+
+    // Вопросы матча
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
         name = "match_questions",
@@ -44,6 +52,29 @@ public class Match {
     )
     private Set<Question> questions = new HashSet<>();
 
-    @OneToMany(mappedBy = "match", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<MatchAnswer> answers = new HashSet<>();
+    // Геттеры и сеттеры для player1 и player2
+    public User getPlayer1() {
+        return player1;
+    }
+
+    public void setPlayer1(User player1) {
+        this.player1 = player1;
+    }
+
+    public User getPlayer2() {
+        return player2;
+    }
+
+    public void setPlayer2(User player2) {
+        this.player2 = player2;
+    }
+
+    // Геттер и сеттер для questions
+    public Set<Question> getQuestions() {
+        return questions;
+    }
+
+    public void setQuestions(Set<Question> questions) {
+        this.questions = questions;
+    }
 }

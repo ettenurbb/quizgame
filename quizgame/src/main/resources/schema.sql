@@ -1,16 +1,17 @@
 -- Таблица пользователей
 CREATE TABLE IF NOT EXISTS users (
     id BIGINT NOT NULL PRIMARY KEY,
-    nickname VARCHAR(50) NOT NULL UNIQUE,
+    nickname VARCHAR(50),
     email VARCHAR(100) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255),
     avatar_url VARCHAR(255),
     elo_rating INTEGER DEFAULT 1200,
     total_quizzes INTEGER DEFAULT 0,
     email_verified BOOLEAN DEFAULT FALSE,
     verification_token VARCHAR(255),
     token_expiration TIMESTAMP,
-    is_blocked BOOLEAN DEFAULT FALSE
+    is_blocked BOOLEAN DEFAULT FALSE,
+    role VARCHAR(20) DEFAULT 'ROLE_USER'
 );
 
 -- Таблица вопросов

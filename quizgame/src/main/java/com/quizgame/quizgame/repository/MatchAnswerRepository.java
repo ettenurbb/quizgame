@@ -9,13 +9,10 @@ import java.util.List;
 import java.util.Optional;
 
 public interface MatchAnswerRepository extends JpaRepository<MatchAnswer, Long> {
-    
     List<MatchAnswer> findByUser(User user);
-
     Optional<MatchAnswer> findByMatchAndUserAndQuestion(Match match, User user, Question question);
-
     boolean existsByMatchAndUserAndQuestion(Match match, User user, Question question);
-
     List<MatchAnswer> findByMatch(Match match);
 
+    List<MatchAnswer> findByMatchAndQuestion(Match match, Question question);
 }

@@ -13,9 +13,6 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    /**
-     * Отправляет письмо с токеном подтверждения email
-     */
     public void sendVerificationEmail(String to, String token) {
         String subject = "Подтверждение email";
         String link = "http://localhost:8080/api/users/verify?token=" + token;
@@ -36,9 +33,6 @@ public class EmailService {
         }
     }
 
-    /**
-     * Отправляет повторное письмо с подтверждением email
-     */
     public void resendVerificationEmail(String to, String token) {
         String subject = "Повторное подтверждение email";
         String link = "http://localhost:8080/api/users/verify?token=" + token;

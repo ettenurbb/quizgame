@@ -19,11 +19,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 @AllArgsConstructor
 public class WebSocketHandler extends TextWebSocketHandler {
-
     private final MatchService matchService;
     private final ObjectMapper objectMapper;
-
-    // Хранилище активных сессий по ID пользователя
     private final Map<Long, WebSocketSession> sessions = new ConcurrentHashMap<>();
 
     public void registerUser(Long userId, WebSocketSession session) {
@@ -38,13 +35,18 @@ public class WebSocketHandler extends TextWebSocketHandler {
         try {
             matchService.processAnswer(request);
 
-            // Отправляем следующий вопрос, если есть
             if (!matchService.isMatchFinished(request.getMatchId())) {
-                Question nextQuestion = matchService.getNextQuestion(request.getMatchId(), request.getUserId());
-                String questionJson = objectMapper.writeValueAsString(nextQuestion);
-                WebSocketSession session = sessions.get(request.getUserId());
-                if (session != null && session.isOpen()) {
-                    session.sendMessage(new TextMessage(questionJson));
+                Question nextQuestion = matchService.getNextQuestionForUser(request.getUserId(), request.getMatchId());
+                if (nextQuestion != null) {
+                    String questionJson = objectMapper.writeValueAsString(Map.of(
+                            "question", nextQuestion.getText(),
+                            "id", nextQuestion.getId(),
+                            "timeLimit", nextQuestion.getTimeLimit()
+                    ));
+                    WebSocketSession session = sessions.get(request.getUserId());
+                    if (session != null && session.isOpen()) {
+                        session.sendMessage(new TextMessage(questionJson));
+                    }
                 }
             } else {
                 sendMatchResult(request.getMatchId());
@@ -55,7 +57,8 @@ public class WebSocketHandler extends TextWebSocketHandler {
     }
 
     private void sendMatchResult(Long matchId) throws IOException {
-        Match match = matchService.getMatchById(matchId);
+        Match match = matchService.findById(matchId)
+                .orElseThrow(() -> new RuntimeException("Матч не найден"));
         String resultJson = objectMapper.writeValueAsString(Map.of("type", "match_result", "match", match));
         for (Long userId : matchService.getPlayersInMatch(matchId)) {
             WebSocketSession session = sessions.get(userId);
