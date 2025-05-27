@@ -1,21 +1,26 @@
 const BASE_URL = 'http://localhost:8080/api';
-let token = localStorage.getItem('token');
-let currentMatchId = null;
+let ws = null;
+let currentQuestionId = null;
 
+// Регистрация
 function register() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+    const nickname = document.getElementById('registerNickname').value;
+    const email = document.getElementById('registerEmail').value;
+    const password = document.getElementById('registerPassword').value;
 
     fetch(`${BASE_URL}/users/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nickname: email, email, password })
-    }).then(res => res.text()).then(alert);
+        body: JSON.stringify({ nickname, email, password })
+    }).then(res => res.text())
+      .then(msg => alert(msg))
+      .catch(err => console.error(err));
 }
 
+// Вход
 function login() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
 
     fetch(`${BASE_URL}/auth/login`, {
         method: 'POST',
@@ -23,77 +28,113 @@ function login() {
         body: JSON.stringify({ email, password })
     }).then(res => res.json())
       .then(data => {
-          token = data.token;
-          localStorage.setItem('token', token);
-          document.getElementById('auth-form').style.display = 'none';
-          document.getElementById('game-menu').style.display = 'block';
-      });
+          localStorage.setItem('token', data.token);
+          window.location.href = 'match.html';
+      })
+      .catch(err => console.error(err));
 }
 
-function startMatch() {
-    // Предположим, мы играем с пользователем ID 2
-    fetch(`${BASE_URL}/matches/start?player1=1&player2=2`, {
-        headers: { Authorization: `Bearer ${token}` }
-    }).then(res => res.json())
-      .then(match => {
-          currentMatchId = match.id;
-          enterMatch(currentMatchId);
-      });
-}
+// Подключение к WebSocket при загрузке страницы игры
+window.onload = function () {
+    if (window.location.pathname.endsWith('match.html')) {
+        connectWebSocket();
+        loadUserProfile();
+    }
+};
 
-function enterMatch(matchId) {
-    document.getElementById('game-menu').style.display = 'none';
-    document.getElementById('match-container').style.display = 'block';
-
-    const ws = new WebSocket("ws://localhost:8080/ws");
+function connectWebSocket() {
+    ws = new WebSocket('ws://localhost:8080/ws');
 
     ws.onopen = () => {
-        console.log("WebSocket соединение установлено");
+        console.log('WebSocket подключен');
+        startMatch();
     };
 
-    ws.onmessage = event => {
+    ws.onmessage = function (event) {
         const data = JSON.parse(event.data);
-        if (data.type === "match_result") {
-            showResults(data.match);
-        } else if (data.type === "question") {
+        if (data.type === 'question') {
             showQuestion(data.question);
+        } else if (data.type === 'end') {
+            showResults(data.result);
         }
     };
 }
 
-function showQuestion(question) {
-    const container = document.getElementById('match-container');
-    container.innerHTML = `
-        <h2>${question.text}</h2>
-        ${question.answers.map(a => `
-            <button onclick="sendAnswer(${question.id}, ${a.id})">${a.text}</button>
-        `).join('<br>')}
-    `;
-}
-
-function sendAnswer(questionId, answerId) {
-    const request = {
-        userId: 1,
-        matchId: currentMatchId,
-        questionId: questionId,
-        selectedAnswerId: answerId,
-        timeTaken: 5.5
-    };
-
-    fetch(`${BASE_URL}/matches/answer`, {
+function startMatch() {
+    // Можно отправить запрос на начало матча
+    fetch(`${BASE_URL}/matches/start`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(request)
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+        }
     });
 }
 
-function showResults(match) {
-    const container = document.getElementById('match-container');
-    container.innerHTML = `
-        <h2>Игра окончена!</h2>
-        <p>Результаты: ${JSON.stringify(match)}</p>
-    `;
+function showQuestion(question) {
+    document.getElementById('question-text').innerText = question.text;
+    const answersContainer = document.getElementById('answers');
+    answersContainer.innerHTML = '';
+    question.answers.forEach(answer => {
+        const btn = document.createElement('button');
+        btn.innerText = answer.text;
+        btn.onclick = () => sendAnswer(answer.id, question.id);
+        answersContainer.appendChild(btn);
+    });
+
+    startTimer(question.timeLimit || 10);
+}
+
+function sendAnswer(answerId, questionId) {
+    const payload = {
+        userId: getUserId(),
+        matchId: 1, // можно динамически
+        questionId,
+        selectedAnswerId: answerId
+    };
+    fetch(`${BASE_URL}/matches/submit-answer`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+        },
+        body: JSON.stringify(payload)
+    });
+}
+
+function showResults(result) {
+    document.getElementById('result-screen').classList.remove('hidden');
+    document.getElementById('match-result').innerText = `Вы набрали ${result.correctAnswersCount} правильных ответов.`;
+}
+
+function getUserId() {
+    // Здесь можно извлечь ID пользователя из токена или отдельного запроса
+    return 1; // временно
+}
+
+function loadUserProfile() {
+    fetch(`${BASE_URL}/users/profile`, {
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+        }
+    }).then(res => res.json())
+      .then(user => {
+          document.getElementById('username').innerText = user.nickname;
+          document.getElementById('elo').innerText = user.eloRating;
+          document.getElementById('avatar').src = user.avatarUrl || 'default-avatar.png';
+      });
+}
+
+// Таймер
+let timerInterval = null;
+function startTimer(seconds) {
+    let timeLeft = seconds;
+    document.getElementById('time-left').innerText = timeLeft;
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById('time-left').innerText = timeLeft;
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+        }
+    }, 1000);
 }

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Игра: Викторина</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="player-info">
+            <img id="avatar" src="default-avatar.png" alt="Avatar">
+            <span id="username">Игрок</span>
+            <span>ELO: <span id="elo">1200</span></span>
+        </div>
+
+        <div id="question-box">
+            <h2 id="question-text">Здесь появится вопрос...</h2>
+            <div id="answers" class="answers-grid"></div>
+            <div class="timer"><span id="time-left">10</span> секунд</div>
+        </div>
+
+        <div id="result-screen" class="hidden">
+            <h2>Результат</h2>
+            <p id="match-result">Вы набрали X правильных ответов.</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

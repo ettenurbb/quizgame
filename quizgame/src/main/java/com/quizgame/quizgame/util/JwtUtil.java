@@ -22,9 +22,12 @@ public class JwtUtil {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public String generateVerificationToken(String email) {
+
+    // Генерация токена с email и ролью
+    public String generateToken(String email, String role) {
         return Jwts.builder()
                 .setSubject(email)
+                .claim("role", role) 
                 .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 24 часа
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();

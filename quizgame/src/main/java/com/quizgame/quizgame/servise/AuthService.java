@@ -31,10 +31,13 @@ public class AuthService {
     public LoginResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new RuntimeException("Неверный пароль");
         }
-        String token = jwtUtil.generateVerificationToken(user.getEmail());
-        return new LoginResponse(token);
+
+        String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
+
+        return new LoginResponse(token, user.getRole());
     }
 }
